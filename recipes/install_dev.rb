@@ -20,8 +20,21 @@
 include_recipe 'nodejs::nodejs_from_package'
 include_recipe 'nodejs::npm'
 
+ver = node['slc']['version']
+verfile = '/var/slc.version'
+
 nodejs_npm 'strongloop' do
 	#installs globally by default
+	options ['--production']
+	version ver
+	notifies :create, "file[#{verfile}]", :immediately
+	notifies :run, "execute[install pm service]"
+	not_if "grep -Fxq '#{ver}' #{verfile}"
+end
+
+file verfile do
+	action :nothing
+	content ver
 end
 
 auth = ''
@@ -34,7 +47,7 @@ ports = "--port #{node['slc']['port']} --base-port #{node['slc']['base-port']}"
 execute 'install pm service' do
 	command "slc pm-install --systemd #{ports} #{auth}"
 	creates '/etc/systemd/system/strong-pm.service'
-	action :run
+	action :nothing
 end	
 
 service 'strong-pm' do

@@ -17,6 +17,7 @@
 # limitations under the License.
 #
 
+default['slc']['version'] = '6.0.0'
 default['slc']['base-port'] = 3000
 default['slc']['port'] = 8701
 default['slc']['http-auth'] = ''
