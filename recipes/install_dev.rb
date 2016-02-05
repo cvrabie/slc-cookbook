@@ -28,7 +28,6 @@ nodejs_npm 'strongloop' do
 	options ['--production']
 	version ver
 	notifies :create, "file[#{verfile}]", :immediately
-	notifies :run, "execute[install pm service]"
 	not_if "grep -Fxq '#{ver}' #{verfile}"
 end
 
@@ -47,7 +46,7 @@ ports = "--port #{node['slc']['port']} --base-port #{node['slc']['base-port']}"
 execute 'install pm service' do
 	command "slc pm-install --systemd #{ports} #{auth}"
 	creates '/etc/systemd/system/strong-pm.service'
-	action :nothing
+	action :run
 end	
 
 service 'strong-pm' do

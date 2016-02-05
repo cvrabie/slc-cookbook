@@ -6,8 +6,19 @@ end
 use_inline_resources
 
 action :deploy do  
-  converge_by("Deploying #{new_resource.service}") do
-    execute "slc deploy --service #{new_resource.service} #{@url} #{new_resource.tar}" do
+  service = new_resource.service
+  tar = new_resource.tar
+  git = new_resource.git
+  converge_by("Deploying #{service} to SLC PM") do
+    if tar.nil? && git.nil?
+      raise "No tar or git repo specified for SLC service #{service}"
+    end
+    if !tar.nil? && !git.nil? 
+      raise "You can't specify both a tar and a git repo for SLC service #{service}"
+    end
+    source = git.nil? ? tar : git
+    branch = (git.nil? || new_resource.branch.nil?) ? '' : "--branch #{new_resource.branch}"
+    execute "slc deploy #{branch} --service #{service} #{@url} #{new_resource.tar}" do
       action :run
       retries 3
     end
@@ -68,22 +79,22 @@ end
 def load_current_resource
   # @current_resource = Chef::Resource::SlcService.new(@new_resource.name)
   # @current_resource.state = get_current_state(@new_resource.name)
-  user = new_resource.user
-  pass = new_resource.password
-  host = new_resource.host
-  port = new_resource.port
+  pm_user = new_resource.pm_user
+  pm_pass = new_resource.pm_password
+  pm_host = new_resource.pm_host
+  pm_port = new_resource.pm_port
   @auth = ''
-  if !user.nil? 
-    if !pass.nil? 
-      @auth = "#{user}:#{pass}@"
+  if !pm_user.nil? 
+    if !pm_pass.nil? 
+      @auth = "#{pm_user}:#{pm_pass}@"
     else
-      @auth = "#{user}@"
+      @auth = "#{pm_user}@"
     end
   end 
-  @url = "http://#{@auth}#{new_resource.host}:#{new_resource.port}"
+  @url = "http://#{@auth}#{new_resource.pm_host}:#{new_resource.pm_port}"
   env = ''
-  if !user.nil? || !pass.nil? || host != '127.0.0.1' || port != 8701
-    env = "STRONGLOOP_PM=#{url}"
+  if !pm_user.nil? || !pm_pass.nil? || pm_host != '127.0.0.1' || pm_port != 8701
+    env = "STRONGLOOP_PM=#{@url}"
   end
 
   @slc = 'slc'

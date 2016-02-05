@@ -20,8 +20,20 @@
 include_recipe 'nodejs::nodejs_from_package'
 include_recipe 'nodejs::npm'
 
+ver = node['slc']['version']
+verfile = '/var/strongpm.version'
+
 nodejs_npm 'strong-pm' do
 	#installs globally by default
+	options ['--production']
+	version ver
+	notifies :create, "file[#{verfile}]", :immediately
+	not_if "grep -Fxq '#{ver}' #{verfile}"
+end
+
+file verfile do
+	action :nothing
+	content ver
 end
 
 auth = ''
