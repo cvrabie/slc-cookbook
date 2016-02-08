@@ -23,9 +23,13 @@ include_recipe 'nodejs::npm'
 ver = node['slc']['version']
 verfile = '/var/slc.version'
 
+execute 'update npm' do
+	command 'npm update -g'
+	not_if "grep -Fxq '#{ver}' #{verfile}"
+end
+
 nodejs_npm 'strongloop' do
-	#installs globally by default
-	options ['--production']
+	options ['-g']
 	version ver
 	notifies :create, "file[#{verfile}]", :immediately
 	not_if "grep -Fxq '#{ver}' #{verfile}"
