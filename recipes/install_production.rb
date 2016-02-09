@@ -17,16 +17,17 @@
 # limitations under the License.
 #
 
-include_recipe 'nodejs::nodejs_from_package'
-include_recipe 'nodejs::npm'
-
 ver = node['slc']['version']
+service_type = node['slc']['service-type']
 verfile = '/var/strongpm.version'
 
 nodejs_npm 'strong-pm' do
 	#installs globally by default
-	options ['--production']
+	options ['--production', '-g']
 	version ver
+	user 'root'
+	group 'root'
+	ignore_failure true
 	notifies :create, "file[#{verfile}]", :immediately
 	not_if "grep -Fxq '#{ver}' #{verfile}"
 end
@@ -45,7 +46,7 @@ ports = "--port #{node['slc']['port']} --base-port #{node['slc']['base-port']}"
 
 execute 'install pm service' do
 	#install using upstart as Amazon Linux does not support systemv
-	command "sl-pm-install #{ports} #{auth}" 
+	command "sl-pm-install #{service_type} #{ports} #{auth}" 
 	creates '/etc/init/strong-pm.conf'
 	action :run
 end	

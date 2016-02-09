@@ -16,6 +16,8 @@ platforms:
 suites:
   - name: default
     run_list:
+      - recipe[nodejs::nodejs_from_package]
+      - recipe[nodejs::npm]
       - recipe[slc::install_dev]
       - recipe[ctl_test::ctl]
     attributes:

@@ -17,20 +17,16 @@
 # limitations under the License.
 #
 
-include_recipe 'nodejs::nodejs_from_package'
-include_recipe 'nodejs::npm'
 
 ver = node['slc']['version']
+service_type = node['slc']['service-type']
 verfile = '/var/slc.version'
 
-execute 'update npm' do
-	command 'npm update -g'
-	not_if "grep -Fxq '#{ver}' #{verfile}"
-end
-
-nodejs_npm 'strongloop' do
-	options ['-g']
-	version ver
+execute 'install strongloop' do
+	cwd '/root'
+	command 'npm install -g strongloop'
+	user 'root'
+	group 'root'
 	notifies :create, "file[#{verfile}]", :immediately
 	not_if "grep -Fxq '#{ver}' #{verfile}"
 end
@@ -48,7 +44,7 @@ end
 ports = "--port #{node['slc']['port']} --base-port #{node['slc']['base-port']}"
 
 execute 'install pm service' do
-	command "slc pm-install #{ports} #{auth}" #install using upstart
+	command "slc pm-install #{service_type} #{ports} #{auth}" #install using upstart
 	creates '/etc/init/strong-pm.conf'
 	action :run
 end	
