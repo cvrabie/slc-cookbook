@@ -16,38 +16,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
+node_bin_folder = ''
+if !ENV['NODE_HOME'].nil? && !ENV['NODE_HOME'].empty? 
+	node_bin_folder = "#{ENV['NODE_HOME']}/bin/"
+end
 
 ver = node['slc']['version']
 service_type = node['slc']['service-type']
 verfile = '/var/slc.version'
 
-directory '/root/.node-gyp' do
-	action :create
-	owner 'root'
-	group 'root'
-	mode '700'
-end
-
-directory '/root/.node-gyp/4.2.6' do
-	action :create
-	owner 'root'
-	group 'root'
-	mode '744'
-end
-
 execute 'install node-gyp' do
-	command 'npm install -g node-gyp'
-	user 'root'
-	group 'root'
+	command '#{node_bin_folder}npm install -g node-gyp'
 	not_if "grep -Fxq '#{ver}' #{verfile}"
+	retries 2
 end
 
 execute 'install strongloop' do
-	command 'npm install -g strongloop'
-	user 'root'
-	group 'root'
+	command '#{node_bin_folder}npm install -g strongloop'	
 	not_if "grep -Fxq '#{ver}' #{verfile}"
+	retries 2
 end
 
 auth = ''
@@ -57,10 +44,9 @@ end
 
 ports = "--port #{node['slc']['port']} --base-port #{node['slc']['base-port']}"
 
-execute 'install pm service' do
-	command "slc pm-install #{service_type} #{ports} #{auth}" #install using upstart
+execute 'install pm service' do	
+	command "#{node_bin_folder}slc pm-install #{service_type} #{ports} #{auth}" #install using upstart
 	creates node['slc']['service-file']
-	action :run
 end	
 
 service 'strong-pm' do

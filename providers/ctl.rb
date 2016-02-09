@@ -55,18 +55,30 @@ end
 
 action :restart do
   converge_by("Restart #{new_resource.service}") do
-    restart_cmd = "soft-restart"
-    if "#{new_resource.force}" == true 
-      stop_cmd = "restart"
+    state = get_current_state(new_resource.service)
+    restart_cmd = ''
+    if(state == 'STARTED')
+      if "#{new_resource.force}" == true 
+        restart_cmd = 'restart'
+      else
+        restart_cmd = 'soft-restart'
+      end
+    else
+      restart_cmd = 'start'
     end
-    execute "#{@slc} ctl #{restart_cmd} #{new_resource.service}" do
-      action :run
-    end
+    execute "#{@slc} ctl #{restart_cmd} #{new_resource.service}" 
+  end
+end
+
+action :status do
+  converge_by("Getting status of #{new_resource.service}") do
+    state = get_current_state(new_resource.service)
+    Chef::Log.info("**** #{new_resource.service} is #{state}")
   end
 end
 
 def get_current_state(service_name)
-  result = Mixlib::ShellOut.new("slc status").run_command
+  result = Mixlib::ShellOut.new("slc status #{service_name}").run_command
   if result.stdout.include? "Processes:"
     "STARTED"
   elsif result.stdout.include? "Not started"
@@ -77,13 +89,13 @@ def get_current_state(service_name)
 end
 
 def load_current_resource
-  # @current_resource = Chef::Resource::SlcService.new(@new_resource.name)
-  # @current_resource.state = get_current_state(@new_resource.name)
   pm_user = new_resource.pm_user
   pm_pass = new_resource.pm_password
   pm_host = new_resource.pm_host
   pm_port = new_resource.pm_port
+
   @auth = ''
+  
   if !pm_user.nil? 
     if !pm_pass.nil? 
       @auth = "#{pm_user}:#{pm_pass}@"
@@ -91,14 +103,21 @@ def load_current_resource
       @auth = "#{pm_user}@"
     end
   end 
+  
   @url = "http://#{@auth}#{new_resource.pm_host}:#{new_resource.pm_port}"
+  
   env = ''
   if !pm_user.nil? || !pm_pass.nil? || pm_host != '127.0.0.1' || pm_port != 8701
     env = "STRONGLOOP_PM=#{@url}"
   end
 
-  @slc = 'slc'
+  node_bin_folder = ''
+  if !ENV['NODE_HOME'].nil? && !ENV['NODE_HOME'].empty? 
+    node_bin_folder = "#{ENV['NODE_HOME']}/bin/"
+  end
+
+  @slc = '#{node_bin_folder}slc'
   if env != ''
-    @slc = "#{env} slc"
+    @slc = "#{env} #{node_bin_folder}slc"
   end
 end

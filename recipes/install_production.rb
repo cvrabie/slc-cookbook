@@ -16,25 +16,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+node_bin_folder = ''
+if !ENV['NODE_HOME'].nil? && !ENV['NODE_HOME'].empty? 
+	node_bin_folder = "#{ENV['NODE_HOME']}/bin/"
+end
 
 ver = node['slc']['version']
 service_type = node['slc']['service-type']
 verfile = '/var/strongpm.version'
 
-nodejs_npm 'strong-pm' do
-	#installs globally by default
-	options ['--production', '-g']
-	version ver
-	user 'root'
-	group 'root'
-	ignore_failure true
-	notifies :create, "file[#{verfile}]", :immediately
+execute 'install strong-pm' do
+	command '#{node_bin_folder}npm install -g strong-pm'	
 	not_if "grep -Fxq '#{ver}' #{verfile}"
-end
-
-file verfile do
-	action :nothing
-	content ver
+	retries 2
 end
 
 auth = ''
@@ -46,12 +40,17 @@ ports = "--port #{node['slc']['port']} --base-port #{node['slc']['base-port']}"
 
 execute 'install pm service' do
 	#install using upstart as Amazon Linux does not support systemv
-	command "sl-pm-install #{service_type} #{ports} #{auth}" 
-	creates '/etc/init/strong-pm.conf'
-	action :run
+	command "#{node_bin_folder}sl-pm-install #{service_type} #{ports} #{auth}" 
+	creates node['slc']['service-file']
 end	
 
 service 'strong-pm' do
-  	provider Chef::Provider::Service::Upstart
+  	provider node['slc']['service-provider']
+  	notifies :create, "file[#{verfile}]", :immediately
 	action [:enable, :start]
+end
+
+file verfile do
+	action :nothing
+	content ver
 end

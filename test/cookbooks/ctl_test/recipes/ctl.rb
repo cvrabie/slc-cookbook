@@ -6,3 +6,7 @@ slc_ctl 'test-app' do
 	action :deploy
 	tar '/tmp/loopback-getting-started-master.tgz'
 end
+
+slc_ctl 'test-app' do
+	action :restart
+end

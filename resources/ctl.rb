@@ -1,4 +1,4 @@
-actions :deploy, :remove, :start, :stop, :restart
+actions :deploy, :remove, :start, :stop, :restart, :status
 default_action :start
 
 attribute :service, :kind_of => String, :name_attribute => true
