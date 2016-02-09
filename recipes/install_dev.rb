@@ -22,18 +22,32 @@ ver = node['slc']['version']
 service_type = node['slc']['service-type']
 verfile = '/var/slc.version'
 
-execute 'install strongloop' do
-	cwd '/root'
-	command 'npm install -g strongloop'
+directory '/root/.node-gyp' do
+	action :create
+	owner 'root'
+	group 'root'
+	mode '700'
+end
+
+directory '/root/.node-gyp/4.2.6' do
+	action :create
+	owner 'root'
+	group 'root'
+	mode '744'
+end
+
+execute 'install node-gyp' do
+	command 'npm install -g node-gyp'
 	user 'root'
 	group 'root'
-	notifies :create, "file[#{verfile}]", :immediately
 	not_if "grep -Fxq '#{ver}' #{verfile}"
 end
 
-file verfile do
-	action :nothing
-	content ver
+execute 'install strongloop' do
+	command 'npm install -g strongloop'
+	user 'root'
+	group 'root'
+	not_if "grep -Fxq '#{ver}' #{verfile}"
 end
 
 auth = ''
@@ -51,5 +65,11 @@ end
 
 service 'strong-pm' do
   	provider node['slc']['service-provider']
+  	notifies :create, "file[#{verfile}]", :immediately
 	action [:enable, :start]
+end
+
+file verfile do
+	action :nothing
+	content ver
 end
