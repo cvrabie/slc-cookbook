@@ -45,11 +45,11 @@ ports = "--port #{node['slc']['port']} --base-port #{node['slc']['base-port']}"
 
 execute 'install pm service' do
 	command "slc pm-install #{service_type} #{ports} #{auth}" #install using upstart
-	creates '/etc/init/strong-pm.conf'
+	creates node['slc']['service-file']
 	action :run
 end	
 
 service 'strong-pm' do
-  	provider Chef::Provider::Service::Upstart
+  	provider node['slc']['service-provider']
 	action [:enable, :start]
 end

@@ -21,4 +21,18 @@ default['slc']['version'] = '6.0.0'
 default['slc']['base-port'] = 3000
 default['slc']['port'] = 8701
 default['slc']['http-auth'] = ''
-default['slc']['service-type'] = '--upstart 0.6'
+
+case node['platform']
+when 'amazon'
+  default['slc']['service-provider'] = Chef::Provider::Service::Upstart
+  default['slc']['service-type'] = '--upstart 0.6'
+  default['slc']['service-file'] = '/etc/init/strong-pm.conf'
+when 'redhat', 'centos', 'fedora'
+  default['slc']['service-provider'] = Chef::Provider::Service::Systemd
+  default['slc']['service-type'] = '--systemd'
+  default['slc']['service-file'] = '/etc/systemd/system/strong-pm.service'
+when 'debian', 'ubuntu'
+  default['slc']['service-provider'] = Chef::Provider::Service::Upstart
+  default['slc']['service-type'] = '--upstart 1.4'
+  default['slc']['service-file'] = '/etc/init/strong-pm.conf'
+end
