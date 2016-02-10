@@ -26,7 +26,7 @@ service_type = node['slc']['service-type']
 verfile = '/var/strongpm.version'
 
 execute 'install strong-pm' do
-	command '#{node_bin_folder}npm install -g strong-pm'	
+	command "#{node_bin_folder}npm install -g strong-pm"
 	not_if "grep -Fxq '#{ver}' #{verfile}"
 	retries 2
 end

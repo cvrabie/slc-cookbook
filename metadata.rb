@@ -8,5 +8,3 @@ version '0.1.2'
 %w{ ubuntu debian redhat centos fedora amazon }.each do |os|
   supports os
 end
-
-depends 'nodejs', '~> 2.4.4'

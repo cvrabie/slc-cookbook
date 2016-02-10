@@ -26,15 +26,13 @@ service_type = node['slc']['service-type']
 verfile = '/var/slc.version'
 
 execute 'install node-gyp' do
-	command '#{node_bin_folder}npm install -g node-gyp'
+	command "#{node_bin_folder}npm install -g node-gyp"
 	not_if "grep -Fxq '#{ver}' #{verfile}"
-	retries 2
 end
 
 execute 'install strongloop' do
-	command '#{node_bin_folder}npm install -g strongloop'	
+	command "#{node_bin_folder}npm install -g strongloop"
 	not_if "grep -Fxq '#{ver}' #{verfile}"
-	retries 2
 end
 
 auth = ''
@@ -45,7 +43,7 @@ end
 ports = "--port #{node['slc']['port']} --base-port #{node['slc']['base-port']}"
 
 execute 'install pm service' do	
-	command "#{node_bin_folder}slc pm-install #{service_type} #{ports} #{auth}" #install using upstart
+	command "#{node_bin_folder}slc pm-install #{service_type} #{ports} #{auth}" 
 	creates node['slc']['service-file']
 end	
 
@@ -57,5 +55,6 @@ end
 
 file verfile do
 	action :nothing
+	mode '0644'
 	content ver
 end
